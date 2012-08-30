@@ -32,11 +32,10 @@ namespace OperationAuthorization
             testAuthorizations.Add(new UserAuthorization("Home/POCResult", new Dictionary<string, string>() { { "id", "12" } }));
             testAuthorizations.Add(new UserAuthorization("Home/POCResult", new Dictionary<string, string>() { { "id", "*" } }));
 
-            var authAttribute = new AuthorizeOperationAttribute();
             var routeParameters = new Dictionary<string, string>();
             routeParameters.Add("id", "1");
 
-            Assert.True(authAttribute.IsAuthorized("Home/POCResult", routeParameters, testAuthorizations));
+            Assert.True(Utilities.IsUserAuthorizedForOperation("Home/POCResult", routeParameters, testAuthorizations));
         }
 
         [Fact]
@@ -47,11 +46,10 @@ namespace OperationAuthorization
             testAuthorizations.Add(new UserAuthorization("Home/POCResult", new Dictionary<string, string>() { { "fakeParam", "1" }, { "id", "1" } }));
             testAuthorizations.Add(new UserAuthorization("Home/POCResult", new Dictionary<string, string>() { { "id", "12" } }));
 
-            var authAttribute = new AuthorizeOperationAttribute();
             var routeParameters = new Dictionary<string, string>();
             routeParameters.Add("id", "13");
 
-            Assert.False(authAttribute.IsAuthorized("Home/POCResult", routeParameters, testAuthorizations));
+            Assert.False(Utilities.IsUserAuthorizedForOperation("Home/POCResult", routeParameters, testAuthorizations));
         }
     }
 }

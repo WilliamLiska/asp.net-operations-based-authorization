@@ -38,18 +38,5 @@ namespace OperationAuthorization
         }
 
         #endregion
-
-        public bool IsAuthorized(string operation, Dictionary<string, string> controllerParameters, IEnumerable<IUserAuthorization> userAuthorizations)
-        {
-            //Get all authorizations for the specified operation
-            var authDictionaries = from a in userAuthorizations
-                                   where a.Operation == operation
-                                   select a.AuthorizationParameters;
-
-            return controllerParameters.Select(parameter => (from a in authDictionaries
-                                                             where a.ContainsKey(parameter.Key) || a.ContainsKey("*")
-                                                             where a.ContainsValue(parameter.Value) || a.ContainsValue("*")
-                                                             select a)).All(filteredAuths => filteredAuths.Any());
-        }
     }
 }
