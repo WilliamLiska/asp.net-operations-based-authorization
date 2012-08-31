@@ -43,15 +43,29 @@ namespace OperationAuthorization
 
         #region Utilities
 
-        private void ParseRouteData(RouteData routeData, out Dictionary<string, string> routeParameters, out string operation)
+        /// <summary>
+        /// Pareses the Route Parameters and the Operation from the RouteData
+        /// </summary>
+        /// <param name="routeData">A RequestContext.RouteData instance.</param>
+        /// <param name="routeParameters">A dictionary that will be populated with the Route Parameters.</param>
+        /// <param name="operation">A string that will be populated with the operation name. Operation is Controller/Action or Area/Controller/Action.</param>
+        public static void ParseRouteData(RouteData routeData, out Dictionary<string, string> routeParameters, out string operation)
         {
             //Get only the parameters from the RouteData, excluding the controller and action
             routeParameters = routeData.Values.Where(routeParameter => routeParameter.Key != "controller" && routeParameter.Key != "action").ToDictionary(routeParameter => routeParameter.Key, routeParameter => routeParameter.Value.ToString());
 
+            var requestedArea = routeData.DataTokens["area"];
             var requestedController = routeData.Values["controller"];
             var requestedAction = routeData.Values["action"];
 
-            operation = requestedController + @"/" + requestedAction;
+            if (requestedArea != null)
+            {
+                operation = requestedArea + @"/" + requestedController + @"/" + requestedAction;
+            }
+            else
+            {
+                operation = requestedController + @"/" + requestedAction;
+            }
         }
 
         #endregion
@@ -64,6 +78,10 @@ namespace OperationAuthorization
                 base.AuthorizeCore(httpContext);
             }
 
+            Dictionary<string, string> routeParameters;
+            string operation;
+
+            ParseRouteData(((MvcHandler)httpContext.CurrentHandler).RequestContext.RouteData, out routeParameters, out operation);
 
         }
     }
