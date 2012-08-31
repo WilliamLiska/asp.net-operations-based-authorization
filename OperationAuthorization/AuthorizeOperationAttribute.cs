@@ -68,7 +68,14 @@ namespace OperationAuthorization
                 return Utilities.IsUserAuthorizedForOperation(operation, routeParameters, userAuthorizations);
             }
 
-
+            var parametersToCheck = _authorizationParameters.Select(param => new
+                                                                                 {
+                                                                                     key = param,
+                                                                                     value =
+                                                                                 routeParameters.FirstOrDefault(
+                                                                                     r => r.Key == param).Value
+                                                                                 }).ToDictionary(p => p.key,
+                                                                                                 p => p.value);
 
         }
     }
