@@ -17,6 +17,7 @@ namespace OperationAuthorization
         #region Properties
 
         private readonly IList<string> _authorizationParameters;
+        private readonly IUserAuthorizationRepository _userAuthorizationRepository; 
 
         #endregion
 

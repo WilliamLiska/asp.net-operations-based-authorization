@@ -9,9 +9,12 @@ namespace OperationAuthorization
     /// <summary>
     /// Implementations of this interface will be responsible for returning a collection of IUserAuthorizations for a given user.
     /// </summary>
-    /// <typeparam name="T">Represents a user. Can be of whatever type is required by the implementation of this interface.</typeparam>
-    public interface IUserAuthorizationRepository<in T>
+    public interface IUserAuthorizationRepository
     {
-        IEnumerable<IUserAuthorization> GetAuthorizationsFor(T user);
+        /// <summary>
+        /// Returns an IEnumerable of IUserAuthorizations for the current user.
+        /// </summary>
+        /// <returns>An IEnumerable of IUserAuthorizations for the current user.</returns>
+        IEnumerable<IUserAuthorization> GetAuthorizationsForCurrentUser();
     }
 }
