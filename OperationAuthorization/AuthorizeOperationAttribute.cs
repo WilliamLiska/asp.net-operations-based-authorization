@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -42,35 +43,6 @@ namespace OperationAuthorization
 
         #endregion
 
-        #region Utilities
-
-        /// <summary>
-        /// Pareses the Route Parameters and the Operation from the RouteData
-        /// </summary>
-        /// <param name="routeData">A RequestContext.RouteData instance.</param>
-        /// <param name="routeParameters">A dictionary that will be populated with the Route Parameters.</param>
-        /// <param name="operation">A string that will be populated with the operation name. Operation is Controller/Action or Area/Controller/Action.</param>
-        public static void ParseRouteData(RouteData routeData, out Dictionary<string, string> routeParameters, out string operation)
-        {
-            //Get only the parameters from the RouteData, excluding the controller and action
-            routeParameters = routeData.Values.Where(routeParameter => routeParameter.Key != "controller" && routeParameter.Key != "action").ToDictionary(routeParameter => routeParameter.Key, routeParameter => routeParameter.Value.ToString());
-
-            var requestedArea = routeData.DataTokens["area"];
-            var requestedController = routeData.Values["controller"];
-            var requestedAction = routeData.Values["action"];
-
-            if (requestedArea != null)
-            {
-                operation = requestedArea + @"/" + requestedController + @"/" + requestedAction;
-            }
-            else
-            {
-                operation = requestedController + @"/" + requestedAction;
-            }
-        }
-
-        #endregion
-
         protected override bool AuthorizeCore(HttpContextBase httpContext)
         {
             //If, for some reason, the handler isn't an Mvc handler, give control to the base
@@ -82,7 +54,21 @@ namespace OperationAuthorization
             Dictionary<string, string> routeParameters;
             string operation;
 
-            ParseRouteData(((MvcHandler)httpContext.CurrentHandler).RequestContext.RouteData, out routeParameters, out operation);
+            //Fill in routeParameters and the operation name
+            Utilities.ParseRouteData(((MvcHandler)httpContext.CurrentHandler).RequestContext.RouteData, out routeParameters, out operation);
+
+            //Get the UserAuthorizations
+            var userAuthorizations = _userAuthorizationRepository.GetAuthorizationsForCurrentUser();
+
+            //If parameters have been supplied from the controller, authorize on those only.
+            //If no parameters have been supplied, authorize on all Action parameters
+            if (_authorizationParameters == null)
+            {
+                //No parameters have been specified for the AuthorizeAttribute; check against all
+                return Utilities.IsUserAuthorizedForOperation(operation, routeParameters, userAuthorizations);
+            }
+
+
 
         }
     }
