@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -33,10 +34,16 @@ namespace OperationAuthorization
        /// Pareses the Route Parameters and the Operation from the RouteData
        /// </summary>
        /// <param name="routeData">A RequestContext.RouteData instance.</param>
+       /// <param name="requestContext"> </param>
        /// <param name="routeParameters">A dictionary that will be populated with the Route Parameters.</param>
        /// <param name="operation">A string that will be populated with the operation name. Operation is Controller/Action or Area/Controller/Action.</param>
-       public static void ParseRouteData(RouteData routeData, out Dictionary<string, string> routeParameters, out string operation)
+       public static void ParseRouteData(RequestContext requestContext, out Dictionary<string, string> routeParameters, out NameValueCollection queryStringParameters, out string operation)
        {
+           var routeData = requestContext.RouteData;
+
+           //Get any querystring parameters
+           queryStringParameters = requestContext.HttpContext.Request.QueryString;
+
            //Get only the parameters from the RouteData, excluding the controller and action
            routeParameters = routeData.Values.Where(routeParameter => routeParameter.Key != "controller" && routeParameter.Key != "action").ToDictionary(routeParameter => routeParameter.Key, routeParameter => routeParameter.Value.ToString());
 

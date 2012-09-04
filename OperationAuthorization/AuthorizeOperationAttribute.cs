@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,7 +19,6 @@ namespace OperationAuthorization
         #region Properties
 
         private readonly IList<string> _authorizationParameters;
-        private readonly IUserAuthorizationRepository _userAuthorizationRepository; 
 
         #endregion
 
@@ -53,12 +53,18 @@ namespace OperationAuthorization
 
             Dictionary<string, string> routeParameters;
             string operation;
+            var requestContext = ((MvcHandler)httpContext.CurrentHandler).RequestContext;
+            NameValueCollection queryStringParameters;
+            
+            var routeData = requestContext.RouteData;
+
+            var queryString = requestContext.HttpContext.Request.QueryString;
 
             //Fill in routeParameters and the operation name
-            Utilities.ParseRouteData(((MvcHandler)httpContext.CurrentHandler).RequestContext.RouteData, out routeParameters, out operation);
+            Utilities.ParseRouteData(((MvcHandler)httpContext.CurrentHandler).RequestContext, out routeParameters, out queryStringParameters, out operation);
 
             //Get the UserAuthorizations
-            var userAuthorizations = _userAuthorizationRepository.GetAuthorizationsForCurrentUser();
+            var userAuthorizations = OperationBasedAuthorizationSetup.UserAuthorizationRepository.GetAuthorizationsForCurrentUser();
 
             //If parameters have been supplied from the controller, authorize on those only.
             //If no parameters have been supplied, authorize on all Action parameters
@@ -68,6 +74,7 @@ namespace OperationAuthorization
                 return Utilities.IsUserAuthorizedForOperation(operation, routeParameters, userAuthorizations);
             }
 
+            //Since parameters were specified in the constructor, match them with values from Route Parameters.
             var parametersToCheck = _authorizationParameters.Select(param => new
                                                                                  {
                                                                                      key = param,
@@ -76,6 +83,21 @@ namespace OperationAuthorization
                                                                                      r => r.Key == param).Value
                                                                                  }).ToDictionary(p => p.key,
                                                                                                  p => p.value);
+
+            var parametersWithValues = parametersToCheck.Where(p => p.Value != null);
+            //Match any parameters without values to values from the querystring
+            var parametersWithoutValues = parametersToCheck.Where(p => p.Value == null).Select(p => new 
+                                                                                                        {
+                                                                                                            key = p.Key,
+                                                                                                            value = queryStringParameters[p.Key]
+                                                                                                        }).ToDictionary(p => p.key,
+                                                                                                                        p => p.value);
+           
+            var concatenatedParameters = parametersWithValues.Concat(parametersWithoutValues).ToDictionary(p => p.Key,
+                                                                                                           p => p.Value);
+
+            //Attempt to authorize
+            return Utilities.IsUserAuthorizedForOperation(operation, concatenatedParameters, userAuthorizations);
 
         }
     }
